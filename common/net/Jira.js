@@ -48,6 +48,50 @@ class Jira {
     })
   }
 
+	async getVersion(projectId, versionName) {
+
+		const versions = await this.getVersions(projectId);
+		for(const version of versions) {
+			if(version.name === versionName) {
+				return version;
+			}
+		}
+	}
+
+	async getVersions(projectId) {
+
+		return this.fetch('getVersions', {
+			pathname: `/rest/api/2/project/${projectId}/versions`,
+		}, {
+			method: 'GET',
+		})
+	}
+
+	async createVersion (body) {
+		return this.fetch('createVersion',
+			{ pathname: '/rest/api/2/version' },
+			{ method: 'POST', body })
+	}
+
+	async updateIssueFixVersion(issueId, version) {
+
+		const data = {
+			fields: {
+				fixVersions: [
+					version
+				]
+			}
+		}
+
+		return this.fetch('transitionIssue', {
+			pathname: `/rest/api/2/issue/${issueId}`,
+		}, {
+			method: 'PUT',
+			body: data,
+		})
+
+	}
+
   async fetch (apiMethodName,
     { host, pathname, query },
     { method, body, headers = {} } = {}) {
