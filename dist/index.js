@@ -24,6 +24,8 @@ module.exports = class {
     const { argv } = this
 
     const issueId = argv.issue
+		const currentReleaseId = argv.currentRelease;
+		const newReleaseId = argv.newRelease;
     const { transitions } = await this.Jira.getIssueTransitions(issueId)
 
     const transitionToApply = _.find(transitions, (t) => {
@@ -40,6 +42,35 @@ module.exports = class {
 
       return
     }
+
+		const issue = await this.Jira.getIssue(issueId)
+		const projectId = issue.fields.project.id;
+		const currentVersion = await this.Jira.getVersion(projectId, currentReleaseId);
+
+		if(currentVersion === undefined) {
+			throw new Error(`currentRelease should always exist: ${currentReleaseId}`);
+		}
+
+		if(currentVersion.released === false) {
+
+			console.log(`Adding current version to issue: ${currentVersion}`)
+			await this.Jira.updateIssueFixVersion(issueId, currentVersion);
+		} else {
+
+			// hardcoded release date for next Tuesday
+			let nextTuesday = new Date();
+			nextTuesday.setDate(nextTuesday.getDate() + (2 + 7 - nextTuesday.getDay()) % 7);
+
+			const newVersion = await this.Jira.createVersion({
+				projectId: projectId,
+				name: newReleaseId,
+				startDate: new Date().toISOString().substring(0, 10),
+				releaseDate: nextTuesday.toISOString().substring(0, 10),
+			});
+
+			console.log(`Created new release and added to issue: ${newReleaseId}`)
+			await this.Jira.updateIssueFixVersion(issueId, newVersion);
+		}
 
     console.log(`Selected transition:${JSON.stringify(transitionToApply, null, 4)}`)
 
@@ -114,6 +145,50 @@ class Jira {
       body: data,
     })
   }
+
+	async getVersion(projectId, versionName) {
+
+		const versions = await this.getVersions(projectId);
+		for(const version of versions) {
+			if(version.name === versionName) {
+				return version;
+			}
+		}
+	}
+
+	async getVersions(projectId) {
+
+		return this.fetch('getVersions', {
+			pathname: `/rest/api/2/project/${projectId}/versions`,
+		}, {
+			method: 'GET',
+		})
+	}
+
+	async createVersion (body) {
+		return this.fetch('createVersion',
+			{ pathname: '/rest/api/2/version' },
+			{ method: 'POST', body })
+	}
+
+	async updateIssueFixVersion(issueId, version) {
+
+		const data = {
+			fields: {
+				fixVersions: [
+					version
+				]
+			}
+		}
+
+		return this.fetch('transitionIssue', {
+			pathname: `/rest/api/2/issue/${issueId}`,
+		}, {
+			method: 'PUT',
+			body: data,
+		})
+
+	}
 
   async fetch (apiMethodName,
     { host, pathname, query },
@@ -32515,6 +32590,8 @@ async function exec () {
 function parseArgs () {
   const transition = core.getInput('transition')
   const transitionId = core.getInput('transitionId')
+	const currentRelease = core.getInput('currentRelease')
+	const newRelease = core.getInput('newRelease')
 
   if (!transition && !transitionId) {
     // Either transition _or_ transitionId _must_ be provided
@@ -32525,6 +32602,8 @@ function parseArgs () {
     issue: core.getInput('issue'),
     transition,
     transitionId,
+		currentRelease,
+		newRelease,
   }
 }
 

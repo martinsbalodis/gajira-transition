@@ -21,7 +21,7 @@ jobs:
       id: create
       uses: atlassian/gajira-create@v3
       with:
-        project: TRANS
+        project: TEST
         issuetype: Task
         summary: Build completed for ${{ github.repository }}
         description: Compare branch|${{ github.event.compare }} # https://developer.github.com/v3/activity/events/types/#webhook-payload-example-31
@@ -31,10 +31,14 @@ jobs:
       with:
         issue: ${{ steps.create.outputs.issue }}
         transition: "To Do"
+        currentRelease: "Test 1.0.1"
+        newRelease: "Test 1.0.2"
 
     - name: Transition issue
       uses: ./
       with:
         issue: ${{ steps.create.outputs.issue }}
         transition: "In progress"
+        currentRelease: "Test 1.0.1"
+        newRelease: "Test 1.0.2"
 

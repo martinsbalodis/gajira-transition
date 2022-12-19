@@ -13,6 +13,12 @@ inputs:
   transitionId:
     description: The id of a transition to apply to the issue
     required: false
+  currentRelease:
+    description: Release name that will be assigned to issue
+    required: true
+  newRelease:
+    description: Release name that will be created and assigned to issue if currentRelease has status Done
+    required: true
 runs:
   using: 'node16'
   main: './dist/index.js'

@@ -15,10 +15,12 @@ Example transition action:
 ```yaml
 - name: Transition issue
   id: transition
-  uses: atlassian/gajira-transition@v3
+  uses: martinsbalodis/gajira-transition@master
   with:
     issue: GA-181
     transition: "In progress"
+    currentRelease: "My Release 1.0.1"
+    newRelease: "My Release 1.0.2"
 }
 ```
 
@@ -46,11 +48,22 @@ jobs:
       id: create
       uses: atlassian/gajira-create@v3
 
+    - name: create version for release
+      id: tag_version
+      uses: mathieudutour/github-tag-action@v6.1
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        release_branches: master
+        default_bump: patch
+        dry_run: true
+
     - name: Transition issue
-      uses: atlassian/gajira-transition@v3
+      uses: martinsbalodis/gajira-transition@master
       with:
         issue: ${{ steps.create.outputs.issue }}
         transition: "In progress"
+        currentRelease: "Test ${{ steps.tag_version.outputs.previous_version }}"
+        newRelease: "Test ${{ steps.tag_version.outputs.new_version }}"
 ```
 ----
 ## Action Spec:
@@ -62,6 +75,8 @@ jobs:
 - `issue` (required) - issue key to perform a transition on
 - `transition` - Case insensetive name of transition to apply. Example: `Cancel` or `Accept`
 - `transitionId` - transition id to apply to an issue
+- `currentRelease` - release name that will be assigned to issue
+- `newRelease` - release name that will be created and assigned to issue if currentRelease has status Done
 
 ### Outputs
 - None
