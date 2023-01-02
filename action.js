@@ -51,19 +51,26 @@ module.exports = class {
 			await this.Jira.updateIssueFixVersion(issueId, currentVersion);
 		} else {
 
-			// hardcoded release date for next Tuesday
-			let nextTuesday = new Date();
-			nextTuesday.setDate(nextTuesday.getDate() + (2 + 7 - nextTuesday.getDay()) % 7);
+			let newVersion = await this.Jira.getVersion(projectId, newReleaseId);
 
-			const newVersion = await this.Jira.createVersion({
-				projectId: projectId,
-				name: newReleaseId,
-				startDate: new Date().toISOString().substring(0, 10),
-				releaseDate: nextTuesday.toISOString().substring(0, 10),
-			});
+      if(newVersion !== undefined) {
+        console.log(`Release added to issue: ${newReleaseId}`);
+      } else {
+        // hardcoded release date for next Tuesday
+        let nextTuesday = new Date();
+        nextTuesday.setDate(nextTuesday.getDate() + (2 + 7 - nextTuesday.getDay()) % 7);
 
-			console.log(`Created new release and added to issue: ${newReleaseId}`)
-			await this.Jira.updateIssueFixVersion(issueId, newVersion);
+        newVersion = await this.Jira.createVersion({
+          projectId: projectId,
+          name: newReleaseId,
+          startDate: new Date().toISOString().substring(0, 10),
+          releaseDate: nextTuesday.toISOString().substring(0, 10),
+        });
+
+        console.log(`Created new release and added to issue: ${newReleaseId}`)
+      }
+      
+      await this.Jira.updateIssueFixVersion(issueId, newVersion);
 		}
 
     console.log(`Selected transition:${JSON.stringify(transitionToApply, null, 4)}`)
