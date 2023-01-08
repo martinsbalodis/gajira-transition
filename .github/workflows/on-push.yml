@@ -31,7 +31,6 @@ jobs:
       with:
         issue: ${{ steps.create.outputs.issue }}
         transition: "To Do"
-        currentRelease: "Test 1.0.1"
         newRelease: "Test 1.0.2"
 
     - name: Transition issue
@@ -39,6 +38,5 @@ jobs:
       with:
         issue: ${{ steps.create.outputs.issue }}
         transition: "In progress"
-        currentRelease: "Test 1.0.1"
         newRelease: "Test 1.0.2"
 

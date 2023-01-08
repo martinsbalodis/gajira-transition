@@ -36,7 +36,6 @@ async function exec () {
 function parseArgs () {
   const transition = core.getInput('transition')
   const transitionId = core.getInput('transitionId')
-	const currentRelease = core.getInput('currentRelease')
 	const newRelease = core.getInput('newRelease')
 
   if (!transition && !transitionId) {
@@ -48,7 +47,6 @@ function parseArgs () {
     issue: core.getInput('issue'),
     transition,
     transitionId,
-		currentRelease,
 		newRelease,
   }
 }

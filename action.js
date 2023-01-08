@@ -18,7 +18,6 @@ module.exports = class {
     const { argv } = this
 
     const issueId = argv.issue
-		const currentReleaseId = argv.currentRelease;
 		const newReleaseId = argv.newRelease;
     const { transitions } = await this.Jira.getIssueTransitions(issueId)
 
@@ -39,39 +38,27 @@ module.exports = class {
 
 		const issue = await this.Jira.getIssue(issueId)
 		const projectId = issue.fields.project.id;
-		const currentVersion = await this.Jira.getVersion(projectId, currentReleaseId);
 
-		if(currentVersion === undefined) {
-			throw new Error(`currentRelease should always exist: ${currentReleaseId}`);
-		}
+		let newVersion = await this.Jira.getVersion(projectId, newReleaseId);
 
-		if(currentVersion.released === false) {
-
-			console.log(`Adding current version to issue: ${currentVersion}`)
-			await this.Jira.updateIssueFixVersion(issueId, currentVersion);
+		if(newVersion !== undefined) {
+			console.log(`Release added to issue: ${newReleaseId}`);
 		} else {
+			// hardcoded release date for next Tuesday
+			let nextTuesday = new Date();
+			nextTuesday.setDate(nextTuesday.getDate() + (2 + 7 - nextTuesday.getDay()) % 7);
 
-			let newVersion = await this.Jira.getVersion(projectId, newReleaseId);
+			newVersion = await this.Jira.createVersion({
+				projectId: projectId,
+				name: newReleaseId,
+				startDate: new Date().toISOString().substring(0, 10),
+				releaseDate: nextTuesday.toISOString().substring(0, 10),
+			});
 
-      if(newVersion !== undefined) {
-        console.log(`Release added to issue: ${newReleaseId}`);
-      } else {
-        // hardcoded release date for next Tuesday
-        let nextTuesday = new Date();
-        nextTuesday.setDate(nextTuesday.getDate() + (2 + 7 - nextTuesday.getDay()) % 7);
-
-        newVersion = await this.Jira.createVersion({
-          projectId: projectId,
-          name: newReleaseId,
-          startDate: new Date().toISOString().substring(0, 10),
-          releaseDate: nextTuesday.toISOString().substring(0, 10),
-        });
-
-        console.log(`Created new release and added to issue: ${newReleaseId}`)
-      }
-      
-      await this.Jira.updateIssueFixVersion(issueId, newVersion);
+			console.log(`Created new release and added to issue: ${newReleaseId}`)
 		}
+
+		await this.Jira.updateIssueFixVersion(issueId, newVersion);
 
     console.log(`Selected transition:${JSON.stringify(transitionToApply, null, 4)}`)
 

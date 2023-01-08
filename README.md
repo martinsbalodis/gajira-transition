@@ -19,7 +19,6 @@ Example transition action:
   with:
     issue: GA-181
     transition: "In progress"
-    currentRelease: "My Release 1.0.1"
     newRelease: "My Release 1.0.2"
 }
 ```
@@ -62,7 +61,6 @@ jobs:
       with:
         issue: ${{ steps.create.outputs.issue }}
         transition: "In progress"
-        currentRelease: "Test ${{ steps.tag_version.outputs.previous_version }}"
         newRelease: "Test ${{ steps.tag_version.outputs.new_version }}"
 ```
 ----
@@ -75,8 +73,7 @@ jobs:
 - `issue` (required) - issue key to perform a transition on
 - `transition` - Case insensetive name of transition to apply. Example: `Cancel` or `Accept`
 - `transitionId` - transition id to apply to an issue
-- `currentRelease` - release name that will be assigned to issue
-- `newRelease` - release name that will be created and assigned to issue if currentRelease has status Done
+- `newRelease` - release name that will be created and assigned to issue
 
 ### Outputs
 - None
